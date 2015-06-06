@@ -9,9 +9,6 @@ if [ ! -d "framework/quark-shell-mac" ]; then
     git clone https://github.com/HackPlan/quark-shell-mac
 fi
 
-cd app/js
-wget https://github.com/w88975/qiniu-token/releases/download/0.01/qiniu-token.min.js
-
 if [ -f "/usr/bin/pod" ];
     then
         cd framework/quark-shell-mac
