@@ -1,3 +1,7 @@
+qiniuToken.config.access_key = '004mJyNuXdOSW3-8_6yv6-e0Z4zTI5VCRhoeALlT';
+qiniuToken.config.secret_key = 'nNb-Yvs9YJzHt6lIVIz2M-qPDBMyT82ZEoncSngn';
+qiniuToken.config.scope = 'kamisama';
+
 var progress = document.getElementById('progress');
 var drop = document.getElementById('drop');
 
@@ -50,6 +54,8 @@ drop.addEventListener('dragover',function () {
 drop.addEventListener('dragleave',function () {
     drop.style.borderColor = 'white';
 });
+
+console.log(qiniuToken.getToken());
 
 var uploader = Qiniu.uploader({
     runtimes: 'html5,flash,html4',

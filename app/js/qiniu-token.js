@@ -15,3 +15,91 @@ d)).finalize(b)}}});var s=e.algo={};return e}(Math);
 g)-899497514);l=g;g=h;h=j<<30|j>>>2;j=n;n=c}b[0]=b[0]+n|0;b[1]=b[1]+j|0;b[2]=b[2]+h|0;b[3]=b[3]+g|0;b[4]=b[4]+l|0},_doFinalize:function(){var d=this._data,e=d.words,b=8*this._nDataBytes,g=8*d.sigBytes;e[g>>>5]|=128<<24-g%32;e[(g+64>>>9<<4)+14]=Math.floor(b/4294967296);e[(g+64>>>9<<4)+15]=b;d.sigBytes=4*e.length;this._process();return this._hash},clone:function(){var e=d.clone.call(this);e._hash=this._hash.clone();return e}});g.SHA1=d._createHelper(l);g.HmacSHA1=d._createHmacHelper(l)})();
 (function(){var g=CryptoJS,l=g.enc.Utf8;g.algo.HMAC=g.lib.Base.extend({init:function(e,d){e=this._hasher=new e.init;"string"==typeof d&&(d=l.parse(d));var g=e.blockSize,k=4*g;d.sigBytes>k&&(d=e.finalize(d));d.clamp();for(var p=this._oKey=d.clone(),b=this._iKey=d.clone(),n=p.words,j=b.words,h=0;h<g;h++)n[h]^=1549556828,j[h]^=909522486;p.sigBytes=b.sigBytes=k;this.reset()},reset:function(){var e=this._hasher;e.reset();e.update(this._iKey)},update:function(e){this._hasher.update(e);return this},finalize:function(e){var d=
 this._hasher;e=d.finalize(e);d.reset();return d.finalize(this._oKey.clone().concat(e))}})})();
+
+var qiniuToken = {
+    config: {
+        access_key : '',
+        secret_key : '',
+        scope: ''
+    },
+
+    getFlags: function () {
+        var linuxTime = 3600 + Math.floor(Date.now() / 1000);
+        var flags = {"scope": this.config.scope, "deadline": linuxTime};
+        return flags;
+    },
+    byteArrayToString: function (byteArray) {
+       var string = '', l = byteArray.length, i;
+       for (i = 0; i < l; i++) {
+           string += String.fromCharCode(byteArray[i]);
+       }
+       return string;
+   },
+
+    urlsafeBase64EncodeFlag: function () {
+        return this.base64_encode(JSON.stringify(this.getFlags()));
+    },
+
+    wordsToByteArray:function(words) {
+      var bytes = [], i;
+      for (i = 0; i < words.length * 32; i += 8) {
+          bytes.push((words[i >>> 5] >>> (24 - i % 32)) & 0xFF);
+      }
+      return bytes;
+    },
+
+    base64ToUrlSafe:function(v) {
+        return v.replace(/\//g, '_').replace(/\+/g, '-');
+    },
+
+    getToken: function () {
+        var encodedFlags = this.urlsafeBase64EncodeFlag();
+        var hmac = CryptoJS.algo.HMAC.create(CryptoJS.algo.SHA1, this.config.secret_key);
+        hmac.update(encodedFlags);
+        var words = hmac.finalize().words;
+        var base64str = this.base64_encode(this.byteArrayToString(this.wordsToByteArray(words)));
+        var encodedSign = this.base64ToUrlSafe(base64str);
+        var uploadToken = this.config.access_key + ':' + encodedSign + ':' + encodedFlags;
+        return uploadToken;
+    },
+
+
+    byteArrayToString: function(byteArray) {
+          var string = '', l = byteArray.length, i;
+          for (i = 0; i < l; i++) {
+              string += String.fromCharCode(byteArray[i]);
+          }
+          return string;
+    },
+
+    base64_encode: function(str){
+        var c1, c2, c3;
+        var base64EncodeChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        var i = 0, len= str.length, string = '';
+
+        while (i < len){
+                c1 = str.charCodeAt(i++) & 0xff;
+                if (i == len){
+                        string += base64EncodeChars.charAt(c1 >> 2);
+                        string += base64EncodeChars.charAt((c1 & 0x3) << 4);
+                        string += "==";
+                        break;
+                }
+                c2 = str.charCodeAt(i++);
+                if (i == len){
+                        string += base64EncodeChars.charAt(c1 >> 2);
+                        string += base64EncodeChars.charAt(((c1 & 0x3) << 4) | ((c2 & 0xF0) >> 4));
+                        string += base64EncodeChars.charAt((c2 & 0xF) << 2);
+                        string += "=";
+                        break;
+                }
+                c3 = str.charCodeAt(i++);
+                string += base64EncodeChars.charAt(c1 >> 2);
+                string += base64EncodeChars.charAt(((c1 & 0x3) << 4) | ((c2 & 0xF0) >> 4));
+                string += base64EncodeChars.charAt(((c2 & 0xF) << 2) | ((c3 & 0xC0) >> 6));
+                string += base64EncodeChars.charAt(c3 & 0x3F);
+        }
+        return string;
+    }
+
+};
